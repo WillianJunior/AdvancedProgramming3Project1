@@ -1,3 +1,15 @@
+/**************************************************/
+/**             Authorship Statement             **/
+/**************************************************/
+/** Author: Willian de Oliveira Barreiros Junior **/
+/** Login: 2105514D                              **/
+/** Title of Assignment: AP3 Exercise 1          **/
+/**************************************************/
+/** This is my own work except for the checker   **/
+/** of leap years, which was found on the course **/
+/** slides (AP3/3013-2014, chap 02 slide 16).    **/
+/**************************************************/
+
 #include "date.h"
 
 /*
@@ -9,7 +21,8 @@
 Date *date_create(char *datestr) {
 	
 	// temporary data fields
-	long day, month;//, year;
+	long day, month, year;
+	Date *date;
 
 	// test string structure
 	if (strlen(datestr) != 10 || datestr[2] != '/' || datestr[5] != '/') {
@@ -53,11 +66,51 @@ Date *date_create(char *datestr) {
 		return NULL;
 	}
 
-	// test year
+	// test year chars
+	if (datestr[6] < '0' || datestr[6] > '2' || datestr[7] < '0' || datestr[7] > '9' || datestr[8] < '0' || datestr[8] > '9' || datestr[9] < '0' || datestr[9] > '9') {
+		printf("[data_create] year chars not between 0000 and 2999 \n");
+		return NULL;
+	}
+
+	// convert year to integer
+	year = (datestr[6] - '0') * 1000 + (datestr[7] - '0') * 100 + (datestr[8] - '0') * 10 + (datestr[9] - '0');
+
+	// test if the leap year and the month are compatible
+	if ((year % 4 == 0 && year % 100 != 0) || year % 400 == 0) {
+		// leap year
+		if (month == 2 && day > 29) {
+			printf("[data_create] day do not match with February on the leap year \n");
+			return NULL;
+		}
+	} else {
+		// not a leap year
+		if (month == 2 && day > 28) {
+			printf("[data_create] day do not match with February on the common year \n");
+			return NULL;
+		}
+	}
+
+	// instanciate a new Date
+	date = malloc(sizeof(Date));
+
+	// add year
+	date->date_bit = year;
+	
+	// add month
+	date->date_bit <<= 4;
+	date->date_bit += month;
 
 	// add day
-	// add month
-	// add year
+	date->date_bit <<= 5;
+	date->date_bit += day;
+
+	printf("%x\n", date->date_bit);
+
+	printf("success - ");
+	date_pretty_print(date);
+	printf("\n");
+
+	return date;
 
 }
 
@@ -83,4 +136,8 @@ int date_compare(Date *date1, Date *date2) {
  */
 void date_destroy(Date *d) {
 	
+}
+
+void date_pretty_print (const Date *d) {
+	printf("%u/%u/%u\n", (d->date_bit >> 9), ((d->date_bit << 23) >> 28), ((d->date_bit << 27) >> 27));
 }

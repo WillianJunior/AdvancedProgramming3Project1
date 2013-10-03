@@ -1,12 +1,22 @@
+/**************************************************/
+/**             Authorship Statement             **/
+/**************************************************/
+/** Author: Willian de Oliveira Barreiros Junior **/
+/** Login: 2105514D                              **/
+/** Title of Assignment: AP3 Exercise 1          **/
+/**************************************************/
+
 #ifndef _DATE_H_INCLUDED_
 #define _DATE_H_INCLUDED_
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <stdint.h>
 
 typedef struct date Date;
 struct date {
-	long date_bit;
+	int32_t date_bit;
 };
 
 /*
@@ -34,5 +44,7 @@ int date_compare(Date *date1, Date *date2);
  * date_destroy returns any storage associated with `d' to the system
  */
 void date_destroy(Date *d);
+
+void date_pretty_print (const Date *d);
 
 #endif /* _DATE_H_INCLUDED_ */
