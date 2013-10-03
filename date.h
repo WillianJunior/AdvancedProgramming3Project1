@@ -9,6 +9,8 @@
 #ifndef _DATE_H_INCLUDED_
 #define _DATE_H_INCLUDED_
 
+#define DEBUG
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -16,7 +18,7 @@
 
 typedef struct date Date;
 struct date {
-	int32_t date_bit;
+	uint32_t date_bit;
 };
 
 /*

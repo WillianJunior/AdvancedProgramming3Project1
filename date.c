@@ -104,11 +104,13 @@ Date *date_create(char *datestr) {
 	date->date_bit <<= 5;
 	date->date_bit += day;
 
-	printf("%x\n", date->date_bit);
+	#ifdef DEBUG
 
-	printf("success - ");
+	printf("success - hex: ");
+	printf("%x\tdate(yyyy/mm/dd): ", date->date_bit);
 	date_pretty_print(date);
 	printf("\n");
+	#endif
 
 	return date;
 
@@ -120,7 +122,9 @@ Date *date_create(char *datestr) {
  *         NULL if not (memory allocation failure)
  */
 Date *date_duplicate(Date *d) {
-	return d;
+	Date *new_date = malloc(sizeof(Date));
+	new_date->date_bit = d->date_bit;
+	return new_date;
 }
 
 /*
@@ -128,14 +132,14 @@ Date *date_duplicate(Date *d) {
  * date1<date2, date1==date2, date1>date2, respectively
  */
 int date_compare(Date *date1, Date *date2) {
-	return 0;
+	return date1->date_bit - date2->date_bit;
 }
 
 /*
  * date_destroy returns any storage associated with `d' to the system
  */
 void date_destroy(Date *d) {
-	
+	free(d);
 }
 
 void date_pretty_print (const Date *d) {
