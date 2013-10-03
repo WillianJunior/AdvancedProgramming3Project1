@@ -2,9 +2,11 @@
 
 #include "date.h"
 
-int main () {
+int main (int argc, char *argv[]) {
 
 	Date *test_date;
+
+	test_date = malloc(sizeof(Date));
 
 	char test_string0[] = "31031992";
 	char test_string1[] = "31203/1992";
@@ -85,6 +87,8 @@ int main () {
 	test_date = date_create(test_string22);
 	printf("23\t");
 	test_date = date_create(test_string23);
+
+	free(test_date);
 
 
 	return 0;

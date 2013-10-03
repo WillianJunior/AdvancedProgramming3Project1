@@ -17,6 +17,7 @@
 #include <stdint.h>
 
 typedef struct date Date;
+// need to define date struct, otherwise Date will be an incomplete type
 struct date {
 	uint32_t date_bit;
 };
