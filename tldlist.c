@@ -34,7 +34,7 @@ int tldlist_add(TLDList *tld, char *hostname, Date *d) {
 		// add it to the tree
 		
 		// update the tldlist's node counter
-		tldlist->node_count++;
+		tld->node_count++;
 
 		return 1;
 	}
@@ -46,7 +46,7 @@ int tldlist_add(TLDList *tld, char *hostname, Date *d) {
  * the creation of the TLDList
  */
 long tldlist_count(TLDList *tld) {
-
+	return tld->node_count;
 }
 
 /*
@@ -76,7 +76,7 @@ void tldlist_iter_destroy(TLDIterator *iter) {
  * tldnode_tldname returns the tld associated with the TLDNode
  */
 char *tldnode_tldname(TLDNode *node) {
-
+	return node->hostname;
 }
 
 /*
@@ -84,5 +84,5 @@ char *tldnode_tldname(TLDNode *node) {
  * corresponding tld was added to the list
  */
 long tldnode_count(TLDNode *node) {
-	
+	return node->host_count;
 }
