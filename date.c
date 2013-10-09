@@ -12,6 +12,8 @@
 
 #include "date.h"
 
+//#define VERBOSE
+
 /*
  * date_create creates a Date structure from `datestr`
  * `datestr' is expected to be of the form "dd/mm/yyyy"
@@ -26,13 +28,17 @@ Date *date_create(char *datestr) {
 
 	// test string structure
 	if (strlen(datestr) != 10 || datestr[2] != '/' || datestr[5] != '/') {
+		#ifdef VERBOSE
 		printf("[data_create] wrong data string structure \n");
+		#endif
 		return NULL;
 	}
 
 	// test day chars
 	if (datestr[0] < '0' || datestr[0] > '3' || datestr[1] < '0' || datestr[1] > '9') {
+		#ifdef VERBOSE
 		printf("[data_create] day chars not between 00 and 39 \n");
+		#endif
 		return NULL;
 	}
 	
@@ -41,13 +47,17 @@ Date *date_create(char *datestr) {
 
 	// test if the day is between 1 and 31
 	if (day > 31 || day < 1) {
+		#ifdef VERBOSE
 		printf("[data_create] day not between 1 and 31 \n");
+		#endif
 		return NULL;
 	}
 
 	// test month chars
 	if (datestr[3] < '0' || datestr[3] > '1' || datestr[4] < '0' || datestr[4] > '9') {
+		#ifdef VERBOSE
 		printf("[data_create] month chars not between 00 and 19 \n");
+		#endif
 		return NULL;
 	}
 
@@ -56,19 +66,25 @@ Date *date_create(char *datestr) {
 
 	// test if the month is between 1 and 12
 	if (month > 12 || month < 1) {
+		#ifdef VERBOSE
 		printf("[data_create] month not between 1 and 12 \n");
+		#endif
 		return NULL;
 	}
 
 	// test if the day and month are compatible
-	if ((month % 2 == 0 && day > 30 && month != 2)) {
+	if ((month % 2 == 1 && day > 30 && month != 2)) {
+		#ifdef VERBOSE
 		printf("[data_create] day do not match with the month \n");
+		#endif
 		return NULL;
 	}
 
 	// test year chars
 	if (datestr[6] < '0' || datestr[6] > '2' || datestr[7] < '0' || datestr[7] > '9' || datestr[8] < '0' || datestr[8] > '9' || datestr[9] < '0' || datestr[9] > '9') {
+		#ifdef VERBOSE
 		printf("[data_create] year chars not between 0000 and 2999 \n");
+		#endif
 		return NULL;
 	}
 
@@ -79,13 +95,17 @@ Date *date_create(char *datestr) {
 	if ((year % 4 == 0 && year % 100 != 0) || year % 400 == 0) {
 		// leap year
 		if (month == 2 && day > 29) {
+			#ifdef VERBOSE
 			printf("[data_create] day do not match with February on the leap year \n");
+			#endif
 			return NULL;
 		}
 	} else {
 		// not a leap year
 		if (month == 2 && day > 28) {
+			#ifdef VERBOSE
 			printf("[data_create] day do not match with February on the common year \n");
+			#endif
 			return NULL;
 		}
 	}
@@ -104,8 +124,7 @@ Date *date_create(char *datestr) {
 	date->date_bit <<= 5;
 	date->date_bit += day;
 
-	#ifdef DEBUG
-
+	#ifdef VERBOSE
 	printf("success - hex: ");
 	printf("%x\tdate(yyyy/mm/dd): ", date->date_bit);
 	date_pretty_print(date);
@@ -143,5 +162,5 @@ void date_destroy(Date *d) {
 }
 
 void date_pretty_print (const Date *d) {
-	printf("%u/%u/%u\n", (d->date_bit >> 9), ((d->date_bit << 23) >> 28), ((d->date_bit << 27) >> 27));
+	printf("%u/%u/%u\n", ((uint32_t)d->date_bit >> 9), (((uint32_t)d->date_bit << 23) >> 28), (((uint32_t)d->date_bit << 27) >> 27));
 }
