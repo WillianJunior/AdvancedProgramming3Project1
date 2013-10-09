@@ -8,7 +8,14 @@
  * returns a pointer to the list if successful, NULL if not
  */
 TLDList *tldlist_create(Date *begin, Date *end) {
-
+	TLDList* tldlist = malloc(sizeof(TLDList));
+	if (tldlist != NULL) {
+		tldlist->root = NULL;
+		tldlist->node_count = 0;
+		tldlist->begin = begin;
+		tldlist->end = end;
+	}
+	return tldlist;
 }
 
 /*
@@ -17,7 +24,21 @@ TLDList *tldlist_create(Date *begin, Date *end) {
  * returns 1 if the entry was counted, 0 if not
  */
 int tldlist_add(TLDList *tld, char *hostname, Date *d) {
+	
+	// if inside the date limit
+	if (date_compare(d,tld->begin) && date_compare(tld->end, d)) {
 
+		// check if the hostname exists
+		// if it does, increment the host counter from the node
+		// if not, create a tldnode
+		// add it to the tree
+		
+		// update the tldlist's node counter
+		tldlist->node_count++;
+
+		return 1;
+	}
+	return 0;
 }
 
 /*

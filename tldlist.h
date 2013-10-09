@@ -7,6 +7,22 @@ typedef struct tldlist TLDList;
 typedef struct tldnode TLDNode;
 typedef struct tlditerator TLDIterator;
 
+struct tldlist {
+	TLDNode* root;
+	long node_count;
+	Date* begin;
+	Date* end;
+};
+
+struct tldnode {
+	char* hostname;
+	long host_count;
+};
+
+struct tlditerator {
+
+};
+
 /*
  * tldlist_create generates a list structure for storing counts against
  * top level domains (TLDs)
