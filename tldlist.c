@@ -25,12 +25,73 @@ TLDList *tldlist_create(Date *begin, Date *end) {
  */
 int tldlist_add(TLDList *tld, char *hostname, Date *d) {
 	
+	TLDNode *newnode;
+
+	// check if the date is whithin the limit
+	if (date_compare(d,tld->begin) > 0 && date_compare(tld->end, d) > 0) {
+		#ifdef DEBUG
+		printf("[ADD] Valid hostname, will be added\n");
+		#endif
+
+		// check if it is the first element of the tree
+		if (tld->root == NULL) {
+			// create a new node and set it as the first root
+			tld->root = tldnode_new(hostname);
+			tld->node_count++;
+		}
+		
+
+		return 1;
+	}
+	#ifdef DEBUG
+	printf("[ADD] Invalid host, date outside the limit\n");
+	#endif
+
+	return 0;
+
+
+}
+
+/* old
+
+TLDNode* parent = NULL, node = tld->root;
+	int cmp;
+
 	// if inside the date limit
 	if (date_compare(d,tld->begin) && date_compare(tld->end, d)) {
 
 		// check if the hostname exists
+		while (node != NULL && (cpm = strcmp(node->hostname, hostname)) != 0) {
+			parent = node;
+			if (cmp > 0)
+				node = node->right;
+			else
+				node = node->left;
+		}
+
 		// if it does, increment the host counter from the node
+		if (node != NULL)
+			node->host_count++;
 		// if not, create a tldnode
+		else {
+			// check if it is the first node to be added
+			if (parent == NULL) {
+				tld->root = malloc(sizeof(TLDNode));
+				node = tld->root;
+			} else if (cmp > 0) {
+				parent->right = malloc(sizeof(TLDNode));
+				node = parent->right;
+			} else {
+				parent->left = malloc(sizeof(TLDNode));
+				node = parent->left;
+			}
+			node->right = NULL;
+			node->left = NULL;
+			node->host_count = 0;
+			strcmp(node->hostname, hostname);
+
+		}
+
 		// add it to the tree
 		
 		// update the tldlist's node counter
@@ -39,7 +100,8 @@ int tldlist_add(TLDList *tld, char *hostname, Date *d) {
 		return 1;
 	}
 	return 0;
-}
+
+*/
 
 /*
  * tldlist_count returns the number of successful tldlist_add() calls since
@@ -86,3 +148,26 @@ char *tldnode_tldname(TLDNode *node) {
 long tldnode_count(TLDNode *node) {
 	return node->host_count;
 }
+
+/*
+ * tldnode_new creates a new node with the given hostname
+ */
+TLDNode *tldnode_new(char *hostname) {
+	TLDNode* newnode = malloc(sizeof(TLDNode));
+	newnode->hostname = malloc(strlen(hostname)*sizeof(char));
+	strcpy(newnode->hostname, hostname);
+	newnode->host_count = 1;
+	newnode->left = NULL;
+	newnode->right = NULL;
+}
+
+/*
+ * print the whole tree given the root (not necessary ordered)
+ */
+ void tldnode_printout(TLDNode *this) {
+ 	if (this != NULL) {
+ 		printf("hostname: %s\n", this->hostname);
+ 		tldnode_printout(this->left);
+ 		tldnode_printout(this->right);
+ 	}
+ }

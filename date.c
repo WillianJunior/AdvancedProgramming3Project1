@@ -12,8 +12,6 @@
 
 #include "date.h"
 
-//#define VERBOSE
-
 /*
  * date_create creates a Date structure from `datestr`
  * `datestr' is expected to be of the form "dd/mm/yyyy"
@@ -151,6 +149,9 @@ Date *date_duplicate(Date *d) {
  * date1<date2, date1==date2, date1>date2, respectively
  */
 int date_compare(Date *date1, Date *date2) {
+	#ifdef VERBOSE
+	printf("date1: %x\ndate2: %x\n", date1->date_bit, date2->date_bit);
+	#endif
 	return date1->date_bit - date2->date_bit;
 }
 

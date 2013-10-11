@@ -9,7 +9,7 @@
 #ifndef _DATE_H_INCLUDED_
 #define _DATE_H_INCLUDED_
 
-#define DEBUG
+//#define VERBOSE
 
 #include <stdio.h>
 #include <stdlib.h>

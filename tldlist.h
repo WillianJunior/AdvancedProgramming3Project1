@@ -1,6 +1,11 @@
 #ifndef _TLDLIST_H_INCLUDED_
 #define _TLDLIST_H_INCLUDED_
 
+#ifdef DEBUG
+#undef DEBUG
+#endif
+#define DEBUG
+
 #include "date.h"
 
 typedef struct tldlist TLDList;
@@ -8,15 +13,17 @@ typedef struct tldnode TLDNode;
 typedef struct tlditerator TLDIterator;
 
 struct tldlist {
-	TLDNode* root;
+	TLDNode *root;
 	long node_count;
-	Date* begin;
-	Date* end;
+	Date *begin;
+	Date *end;
 };
 
 struct tldnode {
-	char* hostname;
+	char *hostname;
 	long host_count;
+	TLDNode *left;
+	TLDNode *right;
 };
 
 struct tlditerator {
@@ -72,5 +79,15 @@ char *tldnode_tldname(TLDNode *node);
  * corresponding tld was added to the list
  */
 long tldnode_count(TLDNode *node);
+
+/*
+ * tldnode_new creates a new node with the given hostname
+ */
+TLDNode *tldnode_new(char *hostname);
+
+/*
+ * print the whole tree given the root (not necessary ordered)
+ */
+ void tldnode_printout(TLDNode *this);
 
 #endif /* _TLDLIST_H_INCLUDED_ */

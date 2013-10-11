@@ -6,27 +6,36 @@
 #define USAGE "usage: %s begin_datestamp end_datestamp [file] ...\n"
 
 static void process(FILE *fd, TLDList *tld) {
+    
     char bf[1024], sbf[1024];
     Date *d;
+    
     while (fgets(bf, sizeof(bf), fd) != NULL) {
+        
         char *q, *p = strchr(bf, ' ');
-	if (! p) {
+        
+        if (! p) {
             fprintf(stderr, "Illegal input line: %s", bf);
-	    return;
+            return;
         }
-	strcpy(sbf, bf);
-	*p++ = '\0';
-	while (*p == ' ')
+
+        strcpy(sbf, bf);
+        *p++ = '\0';
+        
+        while (*p == ' ')
             p++;
-	q = strchr(p, '\n');
-	if (! q) {
+        
+        q = strchr(p, '\n');
+        
+        if (! q) {
             fprintf(stderr, "Illegal input line: %s", sbf);
-	    return;
+            return;
         }
-	*q = '\0';
-	d = date_create(bf);
-	(void) tldlist_add(tld, p, d);
-	date_destroy(d);
+        
+        *q = '\0';
+        d = date_create(bf);
+        (void) tldlist_add(tld, p, d);
+        date_destroy(d);
     }
 }
 
