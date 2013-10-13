@@ -1,7 +1,7 @@
 #ifndef _TLDLIST_H_INCLUDED_
 #define _TLDLIST_H_INCLUDED_
 
-//#define DEBUG
+#define DEBUG
 
 #include <string.h>
 
@@ -13,7 +13,7 @@ typedef struct tlditerator TLDIterator;
 
 struct tldlist {
 	TLDNode *root;
-	long node_count;
+	long host_count;
 	Date *begin;
 	Date *end;
 };
@@ -89,10 +89,9 @@ TLDNode *tldnode_new(char *hostname);
   * tldnode_add update the reference to the pointer that shoud receive
   * the given hostname. the reference can point to either the alreadly
   * existing hostname element or to the left or right subtree where the new 
-  * node was be created. it returns 0 if the hostname already existed, or
-  * 1 if a new node was created.
+  * node was be created.
   */
-int tldnode_add(char *hostname, TLDNode *node);
+void tldnode_add(char *hostname, TLDNode *node);
 
 /*
  * print the whole tree given the root (not necessary ordered)

@@ -11,7 +11,7 @@ TLDList *tldlist_create(Date *begin, Date *end) {
 	TLDList* tldlist = malloc(sizeof(TLDList));
 	if (tldlist != NULL) {
 		tldlist->root = NULL;
-		tldlist->node_count = 0;
+		tldlist->host_count = 0;
 		tldlist->begin = begin;
 		tldlist->end = end;
 	}
@@ -40,13 +40,10 @@ int tldlist_add(TLDList *tld, char *hostname, Date *d) {
 		if (tld->root == NULL) {
 			// create a new node and set it as the first root
 			tld->root = tldnode_new(hostname+i);
-			tld->node_count++;
-		} else {
-			// if not the first node to be added, check if there is a node with its hostname
-			if (!tldnode_add(hostname+i, tld->root))
-				tld->node_count++;
-		}
+		} else
+			tldnode_add(hostname+i, tld->root);
 
+		tld->host_count++;
 		return 1;
 	}
 	#ifdef DEBUG
@@ -62,7 +59,7 @@ int tldlist_add(TLDList *tld, char *hostname, Date *d) {
  * the creation of the TLDList
  */
 long tldlist_count(TLDList *tld) {
-	return tld->node_count;
+	return tld->host_count;
 }
 
 /*
@@ -153,10 +150,9 @@ void tldnode_printout(TLDNode *this) {
   * tldnode_add update the reference to the pointer that shoud receive
   * the given hostname. the reference can point to either the alreadly
   * existing hostname element or to the left or right subtree where the new 
-  * node was be created. it returns 0 if the hostname already existed, or
-  * 1 if a new node was created.
+  * node was be created.
   */
-int tldnode_add(char *hostname, TLDNode *node) {
+void tldnode_add(char *hostname, TLDNode *node) {
 	
 	int cmp;
 
@@ -164,27 +160,24 @@ int tldnode_add(char *hostname, TLDNode *node) {
 		// if lower, move to the left subtree
 		if (node->left != NULL) {
 			// if it haven't found yet, keep searching
-			return tldnode_add(hostname, node->left);
+			tldnode_add(hostname, node->left);
 		} else {
 			// if the tree has runout and haven't been found node, create a new one
 			node->left = tldnode_new(hostname);
-			return 1;
 		}
 	} else if (cmp > 0) {
 		// if greater, move to the right subtree
 		if (node->right != NULL) {
 			// if it haven't found yet, keep searching
-			return tldnode_add(hostname, node->right);
+			tldnode_add(hostname, node->right);
 		} else {
 			// if the tree has runout and haven't been found node, create a new one
 			node->right = tldnode_new(hostname);
-			return 1;
 		}
 	} else {
 		// if it is the same hostname
 		node->host_count++;
 	}
-	return 0;
 }
 
 /*
