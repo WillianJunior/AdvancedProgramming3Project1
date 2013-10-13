@@ -25,23 +25,27 @@ TLDList *tldlist_create(Date *begin, Date *end) {
  */
 int tldlist_add(TLDList *tld, char *hostname, Date *d) {
 	
+	long i;
+
 	// check if the date is whithin the limit
 	if (date_compare(d,tld->begin) > 0 && date_compare(tld->end, d) > 0) {
 		#ifdef DEBUG
 		printf("[ADD] Valid hostname, will be added\n");
 		#endif
 
+		// extract the last dot location
+		for (i=strlen(hostname); i>0 && hostname[i] != '.'; i--);
+
 		// check if it is the first element of the tree
 		if (tld->root == NULL) {
 			// create a new node and set it as the first root
-			tld->root = tldnode_new(hostname);
+			tld->root = tldnode_new(hostname+i);
 			tld->node_count++;
 		} else {
 			// if not the first node to be added, check if there is a node with its hostname
-			tldnode_add(hostname, tld->root);
-
+			if (!tldnode_add(hostname+i, tld->root))
+				tld->node_count++;
 		}
-		
 
 		return 1;
 	}
@@ -51,59 +55,7 @@ int tldlist_add(TLDList *tld, char *hostname, Date *d) {
 
 	return 0;
 
-
 }
-
-/* old
-
-TLDNode* parent = NULL, node = tld->root;
-	int cmp;
-
-	// if inside the date limit
-	if (date_compare(d,tld->begin) && date_compare(tld->end, d)) {
-
-		// check if the hostname exists
-		while (node != NULL && (cpm = strcmp(node->hostname, hostname)) != 0) {
-			parent = node;
-			if (cmp > 0)
-				node = node->right;
-			else
-				node = node->left;
-		}
-
-		// if it does, increment the host counter from the node
-		if (node != NULL)
-			node->host_count++;
-		// if not, create a tldnode
-		else {
-			// check if it is the first node to be added
-			if (parent == NULL) {
-				tld->root = malloc(sizeof(TLDNode));
-				node = tld->root;
-			} else if (cmp > 0) {
-				parent->right = malloc(sizeof(TLDNode));
-				node = parent->right;
-			} else {
-				parent->left = malloc(sizeof(TLDNode));
-				node = parent->left;
-			}
-			node->right = NULL;
-			node->left = NULL;
-			node->host_count = 0;
-			strcmp(node->hostname, hostname);
-
-		}
-
-		// add it to the tree
-		
-		// update the tldlist's node counter
-		tld->node_count++;
-
-		return 1;
-	}
-	return 0;
-
-*/
 
 /*
  * tldlist_count returns the number of successful tldlist_add() calls since
@@ -118,7 +70,9 @@ long tldlist_count(TLDList *tld) {
  * to the iterator if successful, NULL if not
  */
 TLDIterator *tldlist_iter_create(TLDList *tld) {
-
+	TLDIterator* newiter = malloc(sizeof(TLDIterator));
+	newiter->node = tldnode_find_deepest(tld->root);
+	return newiter;
 }
 
 /*
@@ -126,7 +80,25 @@ TLDIterator *tldlist_iter_create(TLDList *tld) {
  * to the TLDNode if successful, NULL if no more elements to return
  */
 TLDNode *tldlist_iter_next(TLDIterator *iter) {
+	TLDNode* returned = iter->node;
 
+	// if the last iterated element was the root
+	if (returned == NULL)
+		return NULL;
+
+	// if the current element is the root
+	if (iter->node->parent == NULL) {
+		iter->node = NULL;
+		return returned;
+	}
+
+	// update the iterator referenced node
+	if (iter->node->parent->right != iter->node)
+		iter->node = tldnode_find_deepest(iter->node->parent->right);
+	else
+		iter->node = iter->node->parent;
+
+	return returned;
 }
 
 /*
@@ -156,11 +128,13 @@ long tldnode_count(TLDNode *node) {
  */
 TLDNode *tldnode_new(char *hostname) {
 	TLDNode* newnode = malloc(sizeof(TLDNode));
+	
 	newnode->hostname = malloc(strlen(hostname)*sizeof(char));
 	strcpy(newnode->hostname, hostname);
 	newnode->host_count = 1;
 	newnode->left = NULL;
 	newnode->right = NULL;
+	newnode->parent = NULL;
 	return newnode;
 }
 
@@ -179,9 +153,10 @@ void tldnode_printout(TLDNode *this) {
   * tldnode_add update the reference to the pointer that shoud receive
   * the given hostname. the reference can point to either the alreadly
   * existing hostname element or to the left or right subtree where the new 
-  * node was be created.
+  * node was be created. it returns 0 if the hostname already existed, or
+  * 1 if a new node was created.
   */
-void tldnode_add(char *hostname, TLDNode *node) {
+int tldnode_add(char *hostname, TLDNode *node) {
 	
 	int cmp;
 
@@ -189,32 +164,38 @@ void tldnode_add(char *hostname, TLDNode *node) {
 		// if lower, move to the left subtree
 		if (node->left != NULL) {
 			// if it haven't found yet, keep searching
-			tldnode_add(hostname, node->left);
+			return tldnode_add(hostname, node->left);
 		} else {
 			// if the tree has runout and haven't been found node, create a new one
-			node->left = malloc(sizeof(TLDNode));
-			node->left->left = NULL;
-			node->left->right = NULL;
-			node->left->host_count = 1;
-			node->left->hostname = malloc(sizeof(char) * strlen(hostname));
-			strcpy(node->left->hostname, hostname);
+			node->left = tldnode_new(hostname);
+			return 1;
 		}
 	} else if (cmp > 0) {
 		// if greater, move to the right subtree
 		if (node->right != NULL) {
 			// if it haven't found yet, keep searching
-			tldnode_add(hostname, node->right);
+			return tldnode_add(hostname, node->right);
 		} else {
 			// if the tree has runout and haven't been found node, create a new one
-			node->right = malloc(sizeof(TLDNode));
-			node->right->left = NULL;
-			node->right->right = NULL;
-			node->right->host_count = 1;
-			node->right->hostname = malloc(sizeof(char) * strlen(hostname));
-			strcpy(node->right->hostname, hostname);
+			node->right = tldnode_new(hostname);
+			return 1;
 		}
 	} else {
 		// if it is the same hostname
 		node->host_count++;
 	}
+	return 0;
+}
+
+/*
+ * return the deepest node to the left (go left before down)
+ */
+TLDNode *tldnode_find_deepest(TLDNode *node) {
+	TLDNode *this = node;
+
+	// since C will stop the evaluation of || on the first true return, 
+	// if the left subtree != NULL it won't evaluate the right subtree
+	if (node != NULL && ((this = tldnode_find_deepest(node->left)) != NULL || (this = tldnode_find_deepest(node->right)) != NULL))
+		return this;
+	return node;
 }

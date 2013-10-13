@@ -1,10 +1,9 @@
 #ifndef _TLDLIST_H_INCLUDED_
 #define _TLDLIST_H_INCLUDED_
 
-#ifdef DEBUG
-#undef DEBUG
-#endif
-#define DEBUG
+//#define DEBUG
+
+#include <string.h>
 
 #include "date.h"
 
@@ -24,10 +23,11 @@ struct tldnode {
 	long host_count;
 	TLDNode *left;
 	TLDNode *right;
+	TLDNode *parent;
 };
 
 struct tlditerator {
-
+	TLDNode *node;
 };
 
 /*
@@ -89,13 +89,19 @@ TLDNode *tldnode_new(char *hostname);
   * tldnode_add update the reference to the pointer that shoud receive
   * the given hostname. the reference can point to either the alreadly
   * existing hostname element or to the left or right subtree where the new 
-  * node was be created.
+  * node was be created. it returns 0 if the hostname already existed, or
+  * 1 if a new node was created.
   */
-void tldnode_add(char *hostname, TLDNode *node);
+int tldnode_add(char *hostname, TLDNode *node);
 
 /*
  * print the whole tree given the root (not necessary ordered)
  */
- void tldnode_printout(TLDNode *this);
+void tldnode_printout(TLDNode *this);
+
+ /*
+ * return the deepest node to the left (go left before down)
+ */
+TLDNode *tldnode_find_deepest(TLDNode *node);
 
 #endif /* _TLDLIST_H_INCLUDED_ */

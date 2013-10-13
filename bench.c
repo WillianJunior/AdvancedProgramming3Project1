@@ -139,7 +139,7 @@ int main () {
 	tld = tldlist_create(test_date_beg, test_date_end);
 
 	// trying to add 3 dates, only one can be inserted
-	hostname = "test0";
+	hostname = "test0.org";
 	test_date = date_create("01/05/1999");
 	tldlist_add(tld, hostname, test_date);
 	test_date = date_create("17/03/2001");
@@ -156,10 +156,10 @@ int main () {
 	tldnode_printout(tld->root);
 
 	// trying to add more diferent nodes
-	hostname = "test1";
+	hostname = "test1.org";
 	test_date = date_create("17/03/2001");
 	tldlist_add(tld, hostname, test_date);
-	hostname = "test2";
+	hostname = "test2.org";
 	test_date = date_create("17/03/2001");
 	tldlist_add(tld, hostname, test_date);
 
