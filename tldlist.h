@@ -85,6 +85,14 @@ long tldnode_count(TLDNode *node);
  */
 TLDNode *tldnode_new(char *hostname);
 
+ /*
+  * tldnode_add update the reference to the pointer that shoud receive
+  * the given hostname. the reference can point to either the alreadly
+  * existing hostname element or to the left or right subtree where the new 
+  * node was be created.
+  */
+void tldnode_add(char *hostname, TLDNode *node);
+
 /*
  * print the whole tree given the root (not necessary ordered)
  */

@@ -149,6 +149,22 @@ int main () {
 
 	tldnode_printout(tld->root);
 
+	// trying to add the second repeated hostname
+	test_date = date_create("17/03/2001");
+	tldlist_add(tld, hostname, test_date);
+
+	tldnode_printout(tld->root);
+
+	// trying to add more diferent nodes
+	hostname = "test1";
+	test_date = date_create("17/03/2001");
+	tldlist_add(tld, hostname, test_date);
+	hostname = "test2";
+	test_date = date_create("17/03/2001");
+	tldlist_add(tld, hostname, test_date);
+
+	tldnode_printout(tld->root);	
+
 	#endif
 
 	return 0;
