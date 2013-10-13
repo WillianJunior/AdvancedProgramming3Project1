@@ -1,7 +1,7 @@
 #ifndef _TLDLIST_H_INCLUDED_
 #define _TLDLIST_H_INCLUDED_
 
-#define DEBUG
+//#define DEBUG
 
 #include <string.h>
 

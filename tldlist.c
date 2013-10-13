@@ -39,9 +39,9 @@ int tldlist_add(TLDList *tld, char *hostname, Date *d) {
 		// check if it is the first element of the tree
 		if (tld->root == NULL) {
 			// create a new node and set it as the first root
-			tld->root = tldnode_new(hostname+i);
+			tld->root = tldnode_new(hostname+i+1);
 		} else
-			tldnode_add(hostname+i, tld->root);
+			tldnode_add(hostname+i+1, tld->root);
 
 		tld->host_count++;
 		return 1;
@@ -90,7 +90,7 @@ TLDNode *tldlist_iter_next(TLDIterator *iter) {
 	}
 
 	// update the iterator referenced node
-	if (iter->node->parent->right != iter->node)
+	if (iter->node->parent->right != iter->node && iter->node->parent->right != NULL)
 		iter->node = tldnode_find_deepest(iter->node->parent->right);
 	else
 		iter->node = iter->node->parent;
@@ -164,6 +164,7 @@ void tldnode_add(char *hostname, TLDNode *node) {
 		} else {
 			// if the tree has runout and haven't been found node, create a new one
 			node->left = tldnode_new(hostname);
+			node->left->parent = node;
 		}
 	} else if (cmp > 0) {
 		// if greater, move to the right subtree
@@ -173,6 +174,7 @@ void tldnode_add(char *hostname, TLDNode *node) {
 		} else {
 			// if the tree has runout and haven't been found node, create a new one
 			node->right = tldnode_new(hostname);
+			node->right->parent = node;
 		}
 	} else {
 		// if it is the same hostname
