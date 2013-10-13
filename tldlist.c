@@ -28,7 +28,7 @@ int tldlist_add(TLDList *tld, char *hostname, Date *d) {
 	long i;
 
 	// check if the date is whithin the limit
-	if (date_compare(d,tld->begin) > 0 && date_compare(tld->end, d) > 0) {
+	if (date_compare(d,tld->begin) >= 0 && date_compare(tld->end, d) >= 0) {
 		#ifdef DEBUG
 		printf("[ADD] Valid hostname, will be added\n");
 		#endif

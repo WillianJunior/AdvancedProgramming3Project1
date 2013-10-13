@@ -140,9 +140,9 @@ int main () {
 
 	// trying to add 3 dates, only one can be inserted
 	hostname = "test0.org";
-	test_date = date_create("01/05/1999");
+	test_date = date_create("01/01/2000");
 	tldlist_add(tld, hostname, test_date);
-	test_date = date_create("17/03/2001");
+	test_date = date_create("02/01/2000");
 	tldlist_add(tld, hostname, test_date);
 	test_date = date_create("16/09/2003");
 	tldlist_add(tld, hostname, test_date);
