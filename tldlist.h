@@ -2,6 +2,7 @@
 #define _TLDLIST_H_INCLUDED_
 
 //#define DEBUG
+#define AVL
 
 #include <string.h>
 
@@ -21,6 +22,7 @@ struct tldlist {
 struct tldnode {
 	char *hostname;
 	long host_count;
+	long height;
 	TLDNode *left;
 	TLDNode *right;
 	TLDNode *parent;
@@ -102,5 +104,34 @@ void tldnode_printout(TLDNode *this);
  * return the deepest node to the left (go left before down)
  */
 TLDNode *tldnode_find_deepest(TLDNode *node);
+
+#ifdef AVL
+
+/*********************************/
+/**			AVL Functions		**/
+/*********************************/
+
+
+/*
+ * balance the tree using the AVL algorithm
+ */
+void tldnode_balance_tree(TLDNode *node);
+
+/*
+ * return the height for a given node, calculated from its children
+ */
+long tldnode_calculate_height(TLDNode *node);
+
+/*
+ * rotate the node to the right
+ */
+void tldnode_rotate_right (TLDNode *node);
+
+/*
+ * rotate the node to the left
+ */
+void tldnode_rotate_left (TLDNode *node);
+
+#endif
 
 #endif /* _TLDLIST_H_INCLUDED_ */

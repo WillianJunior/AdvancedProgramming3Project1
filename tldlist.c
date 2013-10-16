@@ -40,8 +40,10 @@ int tldlist_add(TLDList *tld, char *hostname, Date *d) {
 		if (tld->root == NULL) {
 			// create a new node and set it as the first root
 			tld->root = tldnode_new(hostname+i+1);
-		} else
+		} else {
+			// TODO: here it will be the place to put the AVL code
 			tldnode_add(hostname+i+1, tld->root);
+		}
 
 		tld->host_count++;
 		return 1;
@@ -102,7 +104,7 @@ TLDNode *tldlist_iter_next(TLDIterator *iter) {
  * tldlist_iter_destroy destroys the iterator specified by `iter'
  */
 void tldlist_iter_destroy(TLDIterator *iter) {
-
+	free(iter);
 }
 
 /*
@@ -129,6 +131,7 @@ TLDNode *tldnode_new(char *hostname) {
 	newnode->hostname = malloc(strlen(hostname)*sizeof(char));
 	strcpy(newnode->hostname, hostname);
 	newnode->host_count = 1;
+	newnode->height = 1;
 	newnode->left = NULL;
 	newnode->right = NULL;
 	newnode->parent = NULL;
@@ -165,6 +168,9 @@ void tldnode_add(char *hostname, TLDNode *node) {
 			// if the tree has runout and haven't been found node, create a new one
 			node->left = tldnode_new(hostname);
 			node->left->parent = node;
+			#ifdef AVL
+			tldnode_balance_tree(node->left);
+			#endif
 		}
 	} else if (cmp > 0) {
 		// if greater, move to the right subtree
@@ -175,6 +181,9 @@ void tldnode_add(char *hostname, TLDNode *node) {
 			// if the tree has runout and haven't been found node, create a new one
 			node->right = tldnode_new(hostname);
 			node->right->parent = node;
+			#ifdef AVL
+			tldnode_balance_tree(node->right);
+			#endif
 		}
 	} else {
 		// if it is the same hostname
@@ -194,3 +203,82 @@ TLDNode *tldnode_find_deepest(TLDNode *node) {
 		return this;
 	return node;
 }
+
+#ifdef AVL
+
+/*********************************/
+/**			AVL Functions		**/
+/*********************************/
+
+
+/*
+ * balance the tree using the AVL algorithm
+ */
+void tldnode_balance_tree(TLDNode *node) {
+	long balance;
+
+	if ((node->height = tldnode_calculate_height(node)) > 2) {
+		if (!abs(balance = tldnode_calculate_height(node->right) - tldnode_calculate_height(node->right)) < 2) {
+			if (balance > 0) { // ?-right
+				if (tldnode_calculate_height(node->left->right) > tldnode_calculate_height(node->left->left)) { // left-right
+					tldnode_rotate_left(node->left);
+					node->left->left->height = tldnode_calculate_height(node->left->left);
+					node->left->height = tldnode_calculate_height(node->left);
+				}
+				tldnode_rotate_right(node);
+				node->right->height = tldnode_calculate_height(node->right);
+				node->height = tldnode_calculate_height(node);
+			} else { // ?-left
+				if (tldnode_calculate_height(node->right->left) > tldnode_calculate_height(node->right->right)) { // right-left
+					tldnode_rotate_right(node->right);
+					node->right->right->height = tldnode_calculate_height(node->right->right);
+					node->right->height = tldnode_calculate_height(node->right);
+				}
+				tldnode_rotate_left(node);
+				node->left->height = tldnode_calculate_height(node->left);
+				node->height = tldnode_calculate_height(node);
+			}
+		}
+	}
+
+}
+
+/*
+ * return the height for a given node, calculated from its children
+ */
+long tldnode_calculate_height(TLDNode *node) {
+
+	if (node == NULL)
+		return 0;
+
+	long height_left = node->left == NULL ? 0 : node->left->height;
+	long height_right = node->right == NULL ? 0 : node->right->height;
+
+	return (height_left > height_right ? height_left : height_right) + 1;
+}
+
+/*
+ * rotate the node to the right
+ */
+void tldnode_rotate_right (TLDNode *node) {
+	node->parent->left = node->left;
+	node->left->parent = node->parent;
+	node->parent = node->left;
+	node->left = node->left->right;
+	node->left->parent = node;
+	node->parent->right = node;
+}
+
+/*
+ * rotate the node to the left
+ */
+void tldnode_rotate_left (TLDNode *node) {
+	node->parent->right = node->right;
+	node->right->parent = node->parent;
+	node->parent = node->right;
+	node->right = node->right->left;
+	node->right->parent = node;
+	node->parent->left = node;
+}
+
+#endif
