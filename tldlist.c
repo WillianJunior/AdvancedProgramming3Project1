@@ -19,6 +19,28 @@ TLDList *tldlist_create(Date *begin, Date *end) {
 }
 
 /*
+ * tldlist_destroy destroys the list structure in `tld'
+ *
+ * all heap allocated storage associated with the list is returned to the heap
+ */
+void tldlist_destroy(TLDList *tld) {
+	
+	TLDIterator *it = tldlist_iter_create(tld);
+	TLDNode *node;
+
+	while ((node = tldlist_iter_next(it)) != NULL) {
+		#ifdef DEBUG
+		printf("freed %s\n", node->hostname);
+		#endif
+		free(node->hostname);
+		free(node);
+	}
+
+	free(tld);
+	free(it);
+}
+
+/*
  * tldlist_add adds the TLD contained in `hostname' to the tldlist if
  * `d' falls in the begin and end dates associated with the list;
  * returns 1 if the entry was counted, 0 if not
@@ -128,7 +150,7 @@ long tldnode_count(TLDNode *node) {
 TLDNode *tldnode_new(char *hostname) {
 	TLDNode* newnode = malloc(sizeof(TLDNode));
 	
-	newnode->hostname = malloc(strlen(hostname)*sizeof(char));
+	newnode->hostname = malloc((strlen(hostname) + 1)*sizeof(char));
 	strcpy(newnode->hostname, hostname);
 	newnode->host_count = 1;
 	newnode->height = 1;

@@ -42,6 +42,13 @@ struct tlditerator {
 TLDList *tldlist_create(Date *begin, Date *end);
 
 /*
+ * tldlist_destroy destroys the list structure in `tld'
+ *
+ * all heap allocated storage associated with the list is returned to the heap
+ */
+void tldlist_destroy(TLDList *tld);
+
+/*
  * tldlist_add adds the TLD contained in `hostname' to the tldlist if
  * `d' falls in the begin and end dates associated with the list;
  * returns 1 if the entry was counted, 0 if not
