@@ -100,7 +100,7 @@ TLDNode *tldnode_new(char *hostname);
   * existing hostname element or to the left or right subtree where the new 
   * node was be created.
   */
-void tldnode_add(char *hostname, TLDNode *node);
+void tldnode_add(TLDList *tld, char *hostname, TLDNode *node);
 
 /*
  * print the whole tree given the root (not necessary ordered)
@@ -118,11 +118,15 @@ TLDNode *tldnode_find_deepest(TLDNode *node);
 /**			AVL Functions		**/
 /*********************************/
 
+/*
+ * update the height values on the given node and its parents
+ */
+void tldnode_update_height(TLDNode *node);
 
 /*
  * balance the tree using the AVL algorithm
  */
-void tldnode_balance_tree(TLDNode *node);
+void tldnode_balance_tree(TLDList *tld, TLDNode *node);
 
 /*
  * return the height for a given node, calculated from its children
@@ -132,12 +136,12 @@ long tldnode_calculate_height(TLDNode *node);
 /*
  * rotate the node to the right
  */
-void tldnode_rotate_right (TLDNode *node);
+void tldnode_rotate_right (TLDList *tld, TLDNode *node);
 
 /*
  * rotate the node to the left
  */
-void tldnode_rotate_left (TLDNode *node);
+void tldnode_rotate_left (TLDList *tld, TLDNode *node);
 
 #endif
 
