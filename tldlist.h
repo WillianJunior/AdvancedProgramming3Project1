@@ -1,36 +1,11 @@
 #ifndef _TLDLIST_H_INCLUDED_
 #define _TLDLIST_H_INCLUDED_
 
-//#define DEBUG
-#define AVL
-
-#include <string.h>
-
 #include "date.h"
 
 typedef struct tldlist TLDList;
 typedef struct tldnode TLDNode;
 typedef struct tlditerator TLDIterator;
-
-struct tldlist {
-	TLDNode *root;
-	long host_count;
-	Date *begin;
-	Date *end;
-};
-
-struct tldnode {
-	char *hostname;
-	long host_count;
-	long height;
-	TLDNode *left;
-	TLDNode *right;
-	TLDNode *parent;
-};
-
-struct tlditerator {
-	TLDNode *node;
-};
 
 /*
  * tldlist_create generates a list structure for storing counts against
@@ -88,61 +63,5 @@ char *tldnode_tldname(TLDNode *node);
  * corresponding tld was added to the list
  */
 long tldnode_count(TLDNode *node);
-
-/*
- * tldnode_new creates a new node with the given hostname
- */
-TLDNode *tldnode_new(char *hostname);
-
- /*
-  * tldnode_add update the reference to the pointer that shoud receive
-  * the given hostname. the reference can point to either the alreadly
-  * existing hostname element or to the left or right subtree where the new 
-  * node was be created.
-  */
-void tldnode_add(TLDList *tld, char *hostname, TLDNode *node);
-
-/*
- * print the whole tree given the root (not necessary ordered)
- */
-void tldnode_printout(TLDNode *this);
-
- /*
- * return the deepest node to the left (go left before down)
- */
-TLDNode *tldnode_find_deepest(TLDNode *node);
-
-#ifdef AVL
-
-/*********************************/
-/**			AVL Functions		**/
-/*********************************/
-
-/*
- * update the height values on the given node and its parents
- */
-void tldnode_update_height(TLDNode *node);
-
-/*
- * balance the tree using the AVL algorithm
- */
-void tldnode_balance_tree(TLDList *tld, TLDNode *node);
-
-/*
- * return the height for a given node, calculated from its children
- */
-long tldnode_calculate_height(TLDNode *node);
-
-/*
- * rotate the node to the right
- */
-void tldnode_rotate_right (TLDList *tld, TLDNode *node);
-
-/*
- * rotate the node to the left
- */
-void tldnode_rotate_left (TLDList *tld, TLDNode *node);
-
-#endif
 
 #endif /* _TLDLIST_H_INCLUDED_ */

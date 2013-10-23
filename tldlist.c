@@ -1,5 +1,90 @@
 #include "tldlist.h"
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+//#define DEBUG
+#define AVL
+
+struct tldlist {
+	TLDNode *root;
+	long host_count;
+	Date *begin;
+	Date *end;
+};
+
+struct tldnode {
+	char *hostname;
+	long host_count;
+	long height;
+	TLDNode *left;
+	TLDNode *right;
+	TLDNode *parent;
+};
+
+struct tlditerator {
+	TLDNode *node;
+};
+
+/*
+ * tldnode_new creates a new node with the given hostname
+ */
+static TLDNode *tldnode_new(char *hostname);
+
+ /*
+  * tldnode_add update the reference to the pointer that shoud receive
+  * the given hostname. the reference can point to either the alreadly
+  * existing hostname element or to the left or right subtree where the new 
+  * node was be created.
+  */
+static void tldnode_add(TLDList *tld, char *hostname, TLDNode *node);
+
+ /*
+ * return the deepest node to the left (go left before down)
+ */
+static TLDNode *tldnode_find_deepest(TLDNode *node);
+
+/*
+ * print the whole tree given the root (not necessary ordered)
+ */
+#ifdef DEBUG
+static void tldnode_printout(TLDNode *this);
+#endif
+
+#ifdef AVL
+
+/*********************************/
+/**			AVL Functions		**/
+/*********************************/
+
+/*
+ * update the height values on the given node and its parents
+ */
+static void tldnode_update_height(TLDNode *node);
+
+/*
+ * balance the tree using the AVL algorithm
+ */
+static void tldnode_balance_tree(TLDList *tld, TLDNode *node);
+
+/*
+ * return the height for a given node, calculated from its children
+ */
+static long tldnode_calculate_height(TLDNode *node);
+
+/*
+ * rotate the node to the right
+ */
+static void tldnode_rotate_right (TLDList *tld, TLDNode *node);
+
+/*
+ * rotate the node to the left
+ */
+static void tldnode_rotate_left (TLDList *tld, TLDNode *node);
+
+#endif
+
 /*
  * tldlist_create generates a list structure for storing counts against
  * top level domains (TLDs)
@@ -63,7 +148,6 @@ int tldlist_add(TLDList *tld, char *hostname, Date *d) {
 			// create a new node and set it as the first root
 			tld->root = tldnode_new(hostname+i+1);
 		} else {
-			// TODO: here it will be the place to put the AVL code
 			tldnode_add(tld, hostname+i+1, tld->root);
 		}
 
@@ -147,7 +231,7 @@ long tldnode_count(TLDNode *node) {
 /*
  * tldnode_new creates a new node with the given hostname
  */
-TLDNode *tldnode_new(char *hostname) {
+static TLDNode *tldnode_new(char *hostname) {
 	TLDNode* newnode = malloc(sizeof(TLDNode));
 	
 	newnode->hostname = malloc((strlen(hostname) + 1)*sizeof(char));
@@ -163,13 +247,15 @@ TLDNode *tldnode_new(char *hostname) {
 /*
  * print the whole tree given the root (not necessary ordered)
  */
-void tldnode_printout(TLDNode *this) {
+#ifdef DEBUG
+static void tldnode_printout(TLDNode *this) {
  	if (this != NULL) {
  		tldnode_printout(this->left);
  		printf("hostname: %s - height: %ld\n", this->hostname, this->height);
  		tldnode_printout(this->right);
  	}
 }
+#endif
 
  /*
   * tldnode_add update the reference to the pointer that shoud receive
@@ -177,7 +263,7 @@ void tldnode_printout(TLDNode *this) {
   * existing hostname element or to the left or right subtree where the new 
   * node was be created.
   */
-void tldnode_add(TLDList *tld, char *hostname, TLDNode *node) {
+static void tldnode_add(TLDList *tld, char *hostname, TLDNode *node) {
 	
 	int cmp;
 
@@ -230,7 +316,7 @@ void tldnode_add(TLDList *tld, char *hostname, TLDNode *node) {
 /*
  * return the deepest node to the left (go left before down)
  */
-TLDNode *tldnode_find_deepest(TLDNode *node) {
+static TLDNode *tldnode_find_deepest(TLDNode *node) {
 	TLDNode *this = node;
 
 	// since C will stop the evaluation of || on the first true return, 
@@ -249,7 +335,7 @@ TLDNode *tldnode_find_deepest(TLDNode *node) {
 /*
  * update the height values on the given node and its parents
  */
-void tldnode_update_height(TLDNode *node) {
+static void tldnode_update_height(TLDNode *node) {
 	while (node != NULL) {
 		node->height = tldnode_calculate_height(node);
 		node = node->parent;
@@ -259,7 +345,7 @@ void tldnode_update_height(TLDNode *node) {
 /*
  * balance the tree using the AVL algorithm
  */
-void tldnode_balance_tree(TLDList *tld, TLDNode *node) {
+static void tldnode_balance_tree(TLDList *tld, TLDNode *node) {
 	
 	long balance;
 
@@ -297,42 +383,12 @@ void tldnode_balance_tree(TLDList *tld, TLDNode *node) {
 		node = node->parent;
 	}
 
-	/*
-	while (node != NULL) {
-		if ((node->height = tldnode_calculate_height(node)) > 2) {
-			if (abs(balance = tldnode_calculate_height(node->left) - tldnode_calculate_height(node->right)) > 1) {
-				if (balance > 0) { // ?-right
-					if (tldnode_calculate_height(node->left->right) > tldnode_calculate_height(node->left->left)) { // left-right
-						tldnode_rotate_left(node->left);
-						node->left->left->height = tldnode_calculate_height(node->left->left);
-						node->left->height = tldnode_calculate_height(node->left);
-					}
-					tldnode_rotate_right(node);
-					node->right->height = tldnode_calculate_height(node->right);
-					node->height = tldnode_calculate_height(node);
-				} else { // ?-left
-					if (tldnode_calculate_height(node->right->left) > tldnode_calculate_height(node->right->right)) { // right-left
-						tldnode_rotate_right(node->right);
-						
-						node->right->right->height = tldnode_calculate_height(node->right->right);
-						node->right->height = tldnode_calculate_height(node->right);
-					}
-					tldnode_rotate_left(node);
-					node->left->height = tldnode_calculate_height(node->left);
-					node->height = tldnode_calculate_height(node);
-				}
-			}
-		}
-		node = node->parent;
-	}
-	*/
-
 }
 
 /*
  * return the height for a given node, calculated from its children
  */
-long tldnode_calculate_height(TLDNode *node) {
+static long tldnode_calculate_height(TLDNode *node) {
 
 	if (node == NULL)
 		return 0;
@@ -346,7 +402,7 @@ long tldnode_calculate_height(TLDNode *node) {
 /*
  * rotate the node to the right
  */
-void tldnode_rotate_right (TLDList *tld, TLDNode *node) {
+static void tldnode_rotate_right (TLDList *tld, TLDNode *node) {
 	// check if it is the new first node
 	if (node->parent != NULL) {
 		if (node->parent->left == node)
@@ -369,7 +425,7 @@ void tldnode_rotate_right (TLDList *tld, TLDNode *node) {
 /*
  * rotate the node to the left
  */
-void tldnode_rotate_left (TLDList *tld, TLDNode *node) {
+static void tldnode_rotate_left (TLDList *tld, TLDNode *node) {
 	if (node->parent != NULL) {
 		if (node->parent->right == node)
 			node->parent->right = node->right;
