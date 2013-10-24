@@ -6,6 +6,14 @@ TEST_OBJECTS = date.o tldmonitor.o tldlistLL.o
 BASIC_TEST_OBJECTS = date.o tldmonitor.o
 OUTPUT = tldmonitor
 
+all: clean my
+	-rm *.o
+
+clean: 
+	-rm *.o
+	-rm $(OUTPUT)
+	-rm test
+
 my: $(HEADERS) $(BASIC_SOURCE) $(MY_WORK_SOURCE)
 	gcc -g -W -Wall $(BASIC_SOURCE) $(MY_WORK_SOURCE) -o $(OUTPUT)
 

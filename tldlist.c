@@ -1,8 +1,19 @@
+/**************************************************/
+/**             Authorship Statement             **/
+/**************************************************/
+/** Author: Willian de Oliveira Barreiros Junior **/
+/** Login: 2105514D                              **/
+/** Title of Assignment: AP3 Exercise 1          **/
+/**************************************************/
+/** This is entirely my own work				 **/
+/**************************************************/
+
 #include "tldlist.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 
 //#define DEBUG
 #define AVL
@@ -182,7 +193,8 @@ TLDIterator *tldlist_iter_create(TLDList *tld) {
 
 /*
  * tldlist_iter_next returns the next element in the list; returns a pointer
- * to the TLDNode if successful, NULL if no more elements to return
+ * to the TLDNode if successful, NULL if no more elements to return.
+ * the iterator runs in 
  */
 TLDNode *tldlist_iter_next(TLDIterator *iter) {
 	TLDNode* returned = iter->node;
@@ -232,10 +244,14 @@ long tldnode_count(TLDNode *node) {
  * tldnode_new creates a new node with the given hostname
  */
 static TLDNode *tldnode_new(char *hostname) {
+	
+	unsigned int i;
 	TLDNode* newnode = malloc(sizeof(TLDNode));
 	
 	newnode->hostname = malloc((strlen(hostname) + 1)*sizeof(char));
-	strcpy(newnode->hostname, hostname);
+	for (i=0; i<strlen(hostname); i++)
+		newnode->hostname[i] = tolower(hostname[i]);
+	newnode->hostname[i] = hostname[i];
 	newnode->host_count = 1;
 	newnode->height = 1;
 	newnode->left = NULL;
@@ -267,7 +283,8 @@ static void tldnode_add(TLDList *tld, char *hostname, TLDNode *node) {
 	
 	int cmp;
 
-	if ((cmp = strcmp(hostname, node->hostname)) < 0) {
+	cmp = strcmp(hostname, node->hostname);
+	if (cmp < 0) {
 		// if lower, move to the left subtree
 		if (node->left != NULL) {
 			// if it haven't found yet, keep searching
@@ -405,6 +422,7 @@ static long tldnode_calculate_height(TLDNode *node) {
 static void tldnode_rotate_right (TLDList *tld, TLDNode *node) {
 	// check if it is the new first node
 	if (node->parent != NULL) {
+		// if not, checks in which side of the parent is the node
 		if (node->parent->left == node)
 			node->parent->left = node->left;
 		else
@@ -426,7 +444,9 @@ static void tldnode_rotate_right (TLDList *tld, TLDNode *node) {
  * rotate the node to the left
  */
 static void tldnode_rotate_left (TLDList *tld, TLDNode *node) {
+	// check if it is the new first node
 	if (node->parent != NULL) {
+		// if not, checks in which side of the parent is the node
 		if (node->parent->right == node)
 			node->parent->right = node->right;
 		else 
