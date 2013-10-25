@@ -51,10 +51,22 @@ static TLDNode *tldnode_new(char *hostname);
   */
 static void tldnode_add(TLDList *tld, char *hostname, TLDNode *node);
 
- /*
- * return the deepest node to the left (go left before down)
+/*
+ * tldlist_iter_next_postf returns the next element in the list; returns a pointer
+ * to the TLDNode if successful, NULL if no more elements to return.
+ * the iterator runs in postfixed notation
+ */
+TLDNode *tldlist_iter_next_postf(TLDIterator *iter);
+
+/*
+ * return the deepest node, begins going to the left and than down
  */
 static TLDNode *tldnode_find_deepest(TLDNode *node);
+
+/*
+ * return the deepest node to the left
+ */
+static TLDNode *tldnode_find_deepest_left(TLDNode *node);
 
 /*
  * print the whole tree given the root (not necessary ordered)
@@ -124,7 +136,7 @@ void tldlist_destroy(TLDList *tld) {
 	TLDIterator *it = tldlist_iter_create(tld);
 	TLDNode *node;
 
-	while ((node = tldlist_iter_next(it)) != NULL) {
+	while ((node = tldlist_iter_next_postf(it)) != NULL) {
 		#ifdef DEBUG
 		printf("freed %s\n", node->hostname);
 		#endif
@@ -187,16 +199,49 @@ long tldlist_count(TLDList *tld) {
  */
 TLDIterator *tldlist_iter_create(TLDList *tld) {
 	TLDIterator* newiter = malloc(sizeof(TLDIterator));
-	newiter->node = tldnode_find_deepest(tld->root);
+	newiter->node = tldnode_find_deepest_left(tld->root);
 	return newiter;
 }
 
 /*
  * tldlist_iter_next returns the next element in the list; returns a pointer
  * to the TLDNode if successful, NULL if no more elements to return.
- * the iterator runs in 
+ * the iterator runs in infixed notation
  */
 TLDNode *tldlist_iter_next(TLDIterator *iter) {
+	
+	TLDNode* returned = iter->node;
+	TLDNode *temp;
+
+	// if the last iterated element was the root
+	if (returned == NULL)
+		return NULL;
+
+	// update the iterator referenced node
+	if ((temp = tldnode_find_deepest_left(iter->node->right)) == NULL) {
+		if (iter->node->parent != NULL) {
+			if (iter->node != iter->node->parent->left)
+				while (iter->node->parent != NULL && iter->node == iter->node->parent->right)
+					iter->node = iter->node->parent;
+			if (iter->node->parent == NULL)
+				iter->node = NULL;
+			else
+				iter->node = iter->node->parent;
+		} else
+			iter->node = NULL;
+	} else
+		iter->node = temp;
+
+
+	return returned;
+}
+
+/*
+ * tldlist_iter_next_postf returns the next element in the list; returns a pointer
+ * to the TLDNode if successful, NULL if no more elements to return.
+ * the iterator runs in postfixed notation
+ */
+TLDNode *tldlist_iter_next_postf(TLDIterator *iter) {
 	TLDNode* returned = iter->node;
 
 	// if the last iterated element was the root
@@ -331,7 +376,7 @@ static void tldnode_add(TLDList *tld, char *hostname, TLDNode *node) {
 }
 
 /*
- * return the deepest node to the left (go left before down)
+ * return the deepest node, begins going to the left and than down
  */
 static TLDNode *tldnode_find_deepest(TLDNode *node) {
 	TLDNode *this = node;
@@ -341,6 +386,19 @@ static TLDNode *tldnode_find_deepest(TLDNode *node) {
 	if (node != NULL && ((this = tldnode_find_deepest(node->left)) != NULL || (this = tldnode_find_deepest(node->right)) != NULL))
 		return this;
 	return node;
+}
+
+/*
+ * return the deepest node to the left
+ */
+static TLDNode *tldnode_find_deepest_left(TLDNode *node) {
+
+	if (node != NULL)
+		while (node->left != NULL)
+			node = node->left;
+
+	return node;
+
 }
 
 #ifdef AVL
