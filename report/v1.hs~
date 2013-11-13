@@ -1,0 +1,19 @@
+-- Variation 1 - exceptions
+
+data M1 a = Raise Exception | Return a deriving (Show)
+data Term = Con Int | Div Term Term
+type Exception = String
+
+eval1 :: Term -> M1 Int
+eval1 (Con a) = Return a
+eval1 (Div t u) = case eval1 t of
+		   Raise e -> Raise e
+		   Return a -> 
+		     case eval1 u of
+			Raise e -> Raise e
+			Return b ->
+			  if b == 0
+			    then Raise "divide by zero"
+			    else Return (a `div` b)
+
+

@@ -1,0 +1,20 @@
+-- Variation 2, revised - state
+
+data Term = Con Int | Div Term Term deriving (Show)
+type M a = State -> (a,State)
+type State = Int
+
+unit :: a -> M a
+unit a x = (a,x) -- KISS
+
+(>>==) :: M a -> (a -> M b) -> M b
+m >>== k = \x -> let (a,y) = m x in
+	         let (b,z) = k a y in
+	         (b,z)
+
+tick :: M ()
+tick x = ((),x + 1)
+
+eval :: Term -> M Int
+eval (Con a) = unit a
+eval (Div t u) = eval t >>== \a -> eval u >>== \b -> unit (a `div` b)

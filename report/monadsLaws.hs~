@@ -1,0 +1,30 @@
+data Term = Con Int | Div Term Term deriving (Show,Eq)
+type M a = a
+
+unit :: a -> a
+unit a = a
+
+(>>==) :: M a -> (a -> M b) -> M b
+a >>== k = k a
+
+eval :: Term -> M Int
+eval (Con a) = unit a
+eval (Div t u) = eval t >>== \a -> eval u >>== \b -> unit (a `div` b)
+
+-- left unit
+leftUnit :: (Term -> M Int) -> Term -> M Int
+leftUnit n a = unit >>== \b -> n a
+
+-- right unit
+rightUnit :: (Term -> M Int) -> (Term -> M Int)
+rightUnit m = m >>== \a -> unit a
+
+-- associative
+assosiative1 m n o = m >>== (\a -> n >>== \b -> o) 
+assosiative2 m n o = (m >>== \a -> n) >>== \b -> o 
+
+map :: (a -> b) -> (M a -> M b)
+map f m = m >>== \a -> unit (f a)
+
+join :: M (M a) -> M a
+join z = z >>== \m -> m

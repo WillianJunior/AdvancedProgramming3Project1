@@ -1,0 +1,22 @@
+-- Variation 1, revised - exceptions
+
+data Term = Con Int | Div Term Term deriving (Show)
+data M a = Raise Exception | Return a deriving (Show)
+type Exception = String
+
+unit :: a -> M a
+unit a = Return a
+
+(>>==) :: M a -> (a -> M b) -> M b
+a >>== k = case m of
+		Raise e -> Raise e
+		Return a -> k a
+
+raise :: Exception -> M a
+raise e = Raise e
+
+eval :: Term -> M Int
+eval (Con a) = unit a
+eval (Div t u) = eval t >>== \a -> eval u >>== \b -> if b == 0
+							then raise "divide by zero0"
+							else unit (a `div` b)

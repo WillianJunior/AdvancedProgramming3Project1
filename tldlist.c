@@ -5,7 +5,8 @@
 /** Login: 2105514D                              **/
 /** Title of Assignment: AP3 Exercise 1          **/
 /**************************************************/
-/** This is entirely my own work				 **/
+/** This is my own work as defined in the        **/
+/** Academic Ethics agreement I have signed.	 **/
 /**************************************************/
 
 #include "tldlist.h"

@@ -1,0 +1,9 @@
+\BOOKMARK [1][-]{section.1}{Introduction}{}
+\BOOKMARK [1][-]{section.2}{Date}{}
+\BOOKMARK [1][-]{section.3}{Binary Search Tree}{}
+\BOOKMARK [1][-]{section.4}{AVL Upgrade}{}
+\BOOKMARK [2][-]{subsection.4.1}{Struct}{section.4}
+\BOOKMARK [2][-]{subsection.4.2}{Basic Functions}{section.4}
+\BOOKMARK [2][-]{subsection.4.3}{AVL Balance Tree Function}{section.4}
+\BOOKMARK [2][-]{subsection.4.4}{Linking the AVL functions to the BST}{section.4}
+\BOOKMARK [1][-]{section.5}{Tests}{}

@@ -1,0 +1,473 @@
+\documentclass[twocolumn,10pt]{article}
+
+\usepackage[english]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{listings}
+\usepackage{graphicx}
+\usepackage{comment}
+
+
+\title{Article review “Monads for functional programming''}
+
+\author{Willian de Oliveira Barreiros Junior}
+
+\begin{document}
+\maketitle
+
+
+Article details:
+
+Title: \texttt{Monads for functional programming}
+
+Author: Philip Wadler
+
+
+\section{Introduction}
+
+The author begin the aticle with the sentence "Shall I be pure or impure" as a reference to the two types of funcional programming languages, pure and impure.  
+
+Pure functional languages are characterised by the exclusive use of pure functions. Impure functional languages on the other hand do not have that particular constraint, allowing them to have some advantages and also some disadvantages on pure languages. Pure languages have the advantage to be simpler, since all functions are pure, and also can benefit from lazy evaluation. Impure languages can have different elements such as exceptions, continuations and also the notion of state.
+
+By a simple comparison, some can think pure languages do not have a place among functional languages arguing that the advantages of impure languages outweigh by much the pure languages advantages. However pure languages can simulate those advantages, like state and exceptions, with the use of monads.
+
+The author divide the article in four sections: the use of monads on a evaluator of simple operations, the monads laws, a more advanced view on state applied on a simple interpreter and parsers. 
+
+This review will embrace only the first two sections using pure haskell to show all implementations.
+
+\section{The Evaluator}
+
+In the first section the author shows a comparison between the monadic and the non-monadic approach to an evaluator implementation. In each approach there will be implemented a simple evaluator and an exception ,state and output improvements.
+
+Let's begin on the basic non-monadic evaluator:
+
+\subsection{Basic Evaluator}
+
+\lstset{language=Haskell}
+\begin{lstlisting}
+data Term = Con Int | Div Term Term
+
+eval :: Term -> Int
+eval (Con a) = a
+eval (Div t u) = (eval t) `div` (eval u)
+\end{lstlisting}
+
+This evaluator recieve as input a term and return an integer, being a term defined as an operation or a constant. That way it is possible to serialize operations by making a tree of \textit{Term}s. 
+
+\subsection{Exceptions}
+
+The first improvement to make is to change the code to evolve the evaluator to be exception sensible, this way whenever an exception ocour it will be possible for us to make a contigency. Also, it is interesting for the code to be extensible enough for new exceptions. Using a non-monadic serial approach we have this code:
+
+\lstset{language=Haskell}
+\begin{lstlisting}
+data M a = Raise Exception
+          | Return a deriving (Show)
+data Term = Con Int 
+          | Div Term Term
+type Exception = String
+
+eval :: Term -> M Int
+eval (Con a) = Return a
+eval (Div t u) = case eval t of
+   Raise e -> Raise e
+   Return a -> 
+   case eval u of
+	Raise e -> Raise e
+	Return b ->
+	 if b == 0
+	  then Raise "divide by zero"
+	  else Return (a `div` b)
+\end{lstlisting}
+
+Now every time we provoke an exception (on this case only division by zero) we can control the outcome. We can notice that the code has been severally changed. Also any futher changes to suport new kinds of exceptions won't be achieved easily. One way to improve the extensability of the code is to extract the \textit{if} clause into a new function, thus making the code more redable.
+
+\subsection{State}
+
+The second improvement is the suport to state. On this implementation the state will be used to compute the number of operations (divisions in our evaluator) performed by evaluating a term. Therefore, the output of eval now is the pair, result of the evaluation and the number of divisions performed.
+
+\lstset{language=Haskell}
+\begin{lstlisting}
+data Term = Con Int | Div Term Term
+type M a = State -> (a,State)
+type State = Int
+
+eval :: Term -> M Int
+eval (Con a) x = (a,x)
+eval (Div t u) x =
+   let (a,y) = eval t x in
+   let (b,z) = eval u y in
+   (a `div` b,z + 1)
+\end{lstlisting}
+
+As before, the coupling level between the state concept and the implementation is high, therefore, any attempt of evolving the state code wil become difficult to achieve.
+
+\subsection{Output}
+
+The third and final improvement is to display a trace of execution of an \textit{eval} call. The expected result is a pair containing a \textit{string} (trace of execution) and the \textit{int} result of the evaluation.
+
+\lstset{language=Haskell}
+\begin{lstlisting}
+data Term = Con Int | 
+            Div Term Term 
+            deriving (Show)
+type M a = (Output,a)
+type Output = String
+
+prettyPrinter s = putStr ((fst $ out) 
+                ++ ''\n'' ++ 
+                (show (snd $ out)) ++ ''\n\n'')
+	where out = eval s
+
+eval :: Term -> M Int
+eval (Con a) = (line (Con a) a, a)
+eval (Div t u) = let (x,a) = eval t in
+		 let (y,b) = eval u in
+		 (x ++ y ++ 
+		 line (Div t u) 
+		 (a `div` b), a `div` b)
+
+line :: Term -> Int -> Output
+line t a = ''eval('' ++ show t ++ '') = ''
+		 ++ show a ++ ''\n''
+\end{lstlisting}
+
+To make it easier to see the output there is the \textit{prettyPrinter} function. Also, because of haskell being a pure functional language, this particular implementation can be easily modified to reverse the output order. This does not always happen, being possible only because of haskell's lazy evaluation capability. 
+
+Below we have the regular output of the eval function (actually, the pretty printer output):
+
+\lstset{language=Haskell}
+\begin{lstlisting}
+prettyPrinter (Div (Con 4) (Con 2))
+eval(Con 4) = 4
+eval(Con 2) = 2
+eval(Div (Con 4) (Con 2)) = 2
+\end{lstlisting}
+
+By replacing the term
+
+\lstset{language=Haskell}
+\begin{lstlisting}
+ (x++y++ line 
+     (Div t u) (a `div` b), a `div` b)
+\end{lstlisting}
+
+with the term
+
+\lstset{language=Haskell}
+\begin{lstlisting}
+(line (Div t u)
+      (a `div` b)++y++ x,a `div` b)
+\end{lstlisting}
+
+the output become
+
+\lstset{language=Haskell}
+\begin{lstlisting}
+prettyPrinter (Div (Con 4) (Con 2))
+eval(Div (Con 4) (Con 2)) = 2
+eval(Con 4) = 4
+eval(Con 2) = 2
+\end{lstlisting}
+
+\subsection{Monadic Evaluator}
+
+Our basic evaluator has one major diference in comparison with the improved evaluators, the signature. All the improved evaluators have a basic similarity, the M which can be a data contructor or simply a type. The M stands for monad. The meaning of the monad can be inferred when we look the signatures of \textit{eval}. The basic evaluator has the signature
+
+\lstset{language=Haskell}
+\begin{lstlisting}
+eval :: Term -> Int
+\end{lstlisting}
+
+while all the others have
+
+\lstset{language=Haskell}
+\begin{lstlisting}
+eval :: Term -> M Int
+\end{lstlisting}
+
+meaning that in addition to the \textit{eval}'s basic output there is also some extra computation or side effect. 
+
+For us to change the basic evaluator into a monadic evaluator we first need to implement operations to M, being M a sort of computation. Examining the examples we come with two basic operations, an operator that convert a value into M, and a operator that binds a computation M with another computation M. The first operation will be called \textit{unit}.
+
+\lstset{language=Haskell}
+\begin{lstlisting}
+unit :: a -> M a
+\end{lstlisting}
+
+And the second will be called \textit{binder}, represented by the simbol "> >="
+
+\lstset{language=Haskell}
+\begin{lstlisting}
+(>>=) :: M a -> (a -> M b) -> M b
+\end{lstlisting}
+
+Thus, we can define a monad as a triple (M, unit,  > >=) were some laws are satisfied. These laws will be given later.
+
+Analyzing the non-monadic evaluators we can notice that all of them are serialized, reminding imperative programming languages. Knowing that, we can give the binder operator the objective to serialize computations. By that definition we came with the monadic evaluator:
+
+\lstset{language=Haskell}
+\begin{lstlisting}
+data Term = Con Int | 
+            Div Term Term 
+            deriving (Show)
+type M a = a
+
+eval :: Term -> M Int
+eval (Con a) = unit a
+eval (Div t u) = eval t >>= 
+	   \a -> eval u >>= 
+	   \b -> unit (a `div` b)
+\end{lstlisting}
+
+The eval of Con is self-explanatory. The eval of Div is given by the serialization of this three ordered operations: evaluation of t, evaluation of u and finally, the evaluation of Div t u. So we can read as \textit{evaluate "t" and bind into "a" from the operation: evaluate "u" and bind into "b" from the operation: unit of "a" divided by "b"}.
+
+Maybe it is not visible why we are doing all this work to complicate eval, however it will be a lot easier to rewrite the improvements using monads.
+
+Now the only thing between us and the re-implementation of the improvements is the monad's operations implementation.
+
+\lstset{language=Haskell}
+\begin{lstlisting}
+unit :: a -> M a
+unit a = a
+
+(>>=) :: M a -> (a -> M b) -> M b
+a >>= k = k a
+\end{lstlisting}
+
+As it was explained before, the binder operation bind two computations and can be serializable.
+
+\subsection{Exceptions revised}
+The first improvement is to apply our monads into exceptions management. We are going to achieve such changes without much dificulty, only by updating the monads operators and finally changing a little the evaluator function.
+
+\lstset{language=Haskell}
+\begin{lstlisting}
+data Term = Con Int | 
+     Div Term Term deriving (Show)
+data M a = Raise Exception | 
+	   Return a deriving (Show)
+type Exception = String
+
+unit :: a -> M a
+unit a = Return a
+
+
+(>>=) :: M a -> (a -> M b) -> M b
+m >>= k = case m of
+		Raise e -> Raise e
+		Return a -> k a
+
+raise :: Exception -> M a
+raise e = Raise e
+
+eval :: Term -> M Int
+eval (Con a) = unit a
+eval (Div t u) = eval t >>= 
+	   \a -> eval u >>= 
+	   \b -> if b == 0
+         then raise ''divide by zero''
+         else unit (a `div` b)
+\end{lstlisting}
+
+As before, there is the M constructor, however, now the implementation is much more clear and it is also divided between the monad operators, leaving the eval implementation almost the same. Comparing with the previous implementation, this one is much more flexible. Also, like before in the non-monadic exception code, there is the possibility to extract the \textit{if} clause to a new function.
+
+\subsection{State revised}
+As before, in order to implement the state concept we need to re-implement the basic monads operations, redefine the M type as a tuple and change some little thing in the eval. Also, a new function is needed, tick. This function recieves a M and returns M with its state incremented.
+
+\lstset{language=Haskell}
+\begin{lstlisting}
+data Term = Con Int | 
+            Div Term Term 
+            deriving (Show)
+type M a = State -> (a,State)
+type State = Int
+
+unit :: a -> M a
+unit a x = (a,x)
+
+(>>=) :: M a -> (a -> M b) -> M b
+m >>= k = \x -> let (a,y) = m x in
+	        let (b,z) = k a y in
+	         (b,z)
+
+tick :: M ()
+tick x = ((),x + 1)
+
+eval :: Term -> M Int
+eval (Con a) = unit a
+eval (Div t u) = eval t >>= 
+           \a -> eval u >>= 
+           \b -> tick >>= 
+           \() -> unit (a `div` b)
+\end{lstlisting}
+
+The eval function can be read as \textit{evaluate "t" and bind into "a" from the operation: evaluate "u" and bind into "b" from the operation: tick the state and bind into itself from the operation: unit of: "a" divided by "b"}
+
+\subsection{Output revised}
+Unlike all other improvements, the output implementation without monads was pretty straightforward and simple to change. Nevertheless, being this article about monads we will do it as well. 
+
+\lstset{language=Haskell}
+\begin{lstlisting}
+data Term = Con Int | 
+            Div Term Term 
+           deriving (Show)
+type M a = (Output,a)
+type Output = String
+
+prettyPrinter s = putStr ((fst $ out) 
+      ++ "\n" ++ 
+      (show (snd $ out)) ++ "\n\n")
+	where out = eval s
+
+unit :: a -> M a
+unit a = ("",a)
+
+(>>=) :: M a -> (a -> M b) -> M b
+m >>= k = let (x,a) = m in
+	   let (y,b) = k a in
+	   (x ++ y,b)
+
+line :: Term -> Int -> Output
+line t a = ''eval('' 
+	++ show t ++ '') = '' 
+	++ show a ++ ''\n''
+
+out :: Output -> M ()
+out x = (x,())
+
+eval :: Term -> M Int
+eval (Con a) = out(line(Con a)a) >>=
+           \() -> unit a
+eval (Div t u) = eval t >>=
+           \a -> eval u >>=
+           \b -> out (line (Div t u) 
+                   (a `div` b)) >>=
+           \() -> unit (a `div` b)
+\end{lstlisting}
+
+Just as in the first output implementation there is the line function, which remains unchanged. Also there is a new function, \textit{out}, which is like a \textit{unit} for an string. Here there are major changes in \textit{eval}.
+
+\subsection{Conclusion}
+This section has presented briefly some advantages of using monads as a funcional implementation pattern, still, not always monads are recommended. They can add unecessary complexity to the algorithm. Using the output implementations as an example, the non-monadic was more straightfoward and the only disadvantage in comparison with the monadic implementation happens when it is needed a functionality change. Monads, nonetheless, have shown themselves effective when creating a framework because of their high flexibility.
+
+\section{Monad Laws}
+A monad was previously defined as the triple data / type definition, unit operator and the binder operator. On this section the monad definition will be redefined as three oparators, however, we are going to define some monads laws before.
+
+The \textit{left unit} law describes that the \textit{unit} of a given value \textit{a} binded to the lambda function \textit{b} ->\textit{n} , being n a computation; generates the same output as \textit{n} applied to \textit{a}.
+
+\lstset{language=Haskell}
+\begin{lstlisting}
+n a = leftUnit n a = unit a >>= 
+			\b -> n b
+\end{lstlisting}
+
+The \textit{right unit} law describes that some computation \textit{m} binded to the lambda function of \textit{unit} results in \textit{m} itself.
+
+\lstset{language=Haskell}
+\begin{lstlisting}
+m = m >>= \a -> unit a
+\end{lstlisting}
+
+The third and last law, \textit{associative}, describes that the order of the binders are irrelevant. In this case the output of the computation is the same, no matter if \textit{m} is binded to \textit{a} and then binded to \textit{o}, or if \textit{a} and \textit{o} are binded before, and then they are binded to \textit{m}.
+
+\lstset{language=Haskell}
+\begin{lstlisting}
+m >>= (\a -> n >>= \b -> o) = 
+(m >>= \a -> n) >>= \b -> o 
+\end{lstlisting}
+
+These three laws can be used to demonstrate the results of some evaluation. Any binary operator that obey all three laws above is called a monoid.
+
+Having these three laws we can reformulate the monads basic operations by defining a monad as a type and the operations \textit{unit}, \textit{map} and \textit{join}.
+
+\lstset{language=Haskell}
+\begin{lstlisting}
+map :: (a -> b) -> (M a -> M b)
+map f m = m >>= \a -> unit (f a)
+
+join :: M (M a) -> M a
+join z = z >>= \m -> m
+\end{lstlisting}
+
+Here, \textit{map} applies some function \textit{f} to the result of some computation \textit{m}; and \textit{join} flattens a \textit{z} double layer computation into a single layer executable computation. A easy way to understand these operations is to apply them to a well known monad: lists. In lists, the \textit{map} operator apply some function \textit{f} to the \textit{m} computation, being \textit{m} the way lists are traveled, therefore, applying \textit{f} to every element on the list. The \textit{join} operator of lists flatten a list of lists into a single, one layer, list.
+
+Using the three monads laws we can formuate some more laws about the use of \textit{map}, \textit{join} and \textit{unit}:
+
+\lstset{language=Haskell}
+\begin{lstlisting}
+  map x = x
+  map f(g) x = map f (map g x)
+  map f (unit x) = unit (f x)
+  map f (join x) = join (map (map f x))
+  join (unit x) = x
+  join (map unit x) = x
+  join (map join x) = join (join x)
+  join (map k m) = m >>= k
+\end{lstlisting}
+
+It is possible to change the definition of monads from, the triple of a type definition and the operators unit and bind, to the definitions of \textit{map}, \textit{join} and \textit{unit}.
+
+\section{Conclusion}
+
+As seen in the article, monads can be a viable code transformer to pure functional programming languages. Nevertheless, not always the use of monads make the code more readable or more extensible. An example is the output improvement. There either using monads or not, implementation satisfies both the requirements of extensibility and functionality. 
+
+The author's exception example was deliberately implemented to be serializable, making it easier to evolve the code to a monad aproach, but also making it more dificult to read. Also, all of the monads examples given in the article rely on serialization, wich can result in low eficiency comparing with a parallel aproch.
+
+It was also seen that monads can be defined in more than one way, by the triple of a type and the operations \textit{unit} and \textit{bind}, or by the operations \textit{unit}, \textit{map} and \textit{join}. To come to such result, many laws were needed to be written. Although these laws make possible the ability to prove some properties of monads, not everyone will atempt to solve a problem through these laws. Besides, there are not many cases where the monad defined by the operations \textit{unit}, \textit{map} and \textit{join} (defined by Eugenio Moggi as the Kleisli triple) are used instead of the regular triple of a type and the operations \textit{unit} and \textit{bind}.
+
+\begin{comment}
+
+\section{Parsers}
+Parsers are a great example of use of monads. As it will be seen, the use of monads will be essential to make a simple and straightfoward implementation of some basic operations of parsers. But first we need to define parsers.
+
+\subsection{Definition}
+In essence, a parser is a function that takes some structured container and convert it into some other structure. A simple example is to parse a string contaning some arithmetic expression into a sintatic tree, which can be used to sove the expression. 
+
+In this section the parser will have a string as the input and the pair: parsed part and remaning unparsed string.
+
+\lstset{language=Haskell}
+\begin{lstlisting}
+  type Parser a = String -> [(a,String)]
+\end{lstlisting}
+
+As you can see the output of a perser is a list of pairs. This is to suport ambiguous sentences. Case the parser fails an empty list will be return, case the parser is sucessfull a list will be return; in case the parser comes with more than one result, all results will come into the list. A possible alternative to the list implementation is using maybe.
+
+\subsection{Basic Monads Operations}
+
+Since we are going to implement a parser framework with monads, the first step is to implement the two basic monads operations.
+
+\lstset{language=Haskell}
+\begin{lstlisting}
+type Parser a = String -> [(a,String)]
+
+unit :: a -> Parser a
+unit a x = [(a,x)]
+
+(>>=) :: Parser a -> (a -> Parser b) -> 
+		Parser b
+m >>= k = \x -> [(b,z) 
+	| (a,y) <- m x, (b,z) <- k a y] 
+\end{lstlisting}
+
+The \textit{unit} operator returns the returning structure of a parser (a list of pairs of a parameter and a string ). The binder operation is the standard binder.
+\end{comment}
+
+
+\section{Bibliografia}
+\bibstyle{playn}
+\bibliography{refs}
+
+\textit{}
+
+\lstset{language=Haskell}
+\begin{lstlisting}
+
+\end{lstlisting}
+
+
+ \texttt{Monads for Functional Programming - Philip Wadler}
+
+ \texttt{Functional Perls - Monadic Parsing in Haskell - Graham Hutton, Erik Meijer}
+
+ \texttt{Computational Lambda-Calculus and Monads - Eugenio Moggi}
+
+\end{document}
